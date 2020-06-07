@@ -53,6 +53,8 @@ while RUNNING:
                 if cell.getTouching(cell2):
                     pygame.draw.circle(screen, (0, 255, 0), cell.pos, cell.radius)
                     if cell.radius > cell2.radius:
+                        # these cell exist checks dont fix the bug here
+                        # sometimes tries to remove a cell that doesn't exist
                         if cell2:
                             cells.remove(cell2)
                         cell.radius += 2
