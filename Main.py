@@ -23,17 +23,22 @@ while RUNNING:
             RUNNING = False
 
     screen.fill((0, 0, 0))
-    x = random.randint(0, 800)
-    y = random.randint(0, 600)
+
+    # add a new cell
+    x = random.randint(0, screen.get_width())
+    y = random.randint(0, screen.get_height())
     cells.append(Cell([x, y]))
 
     # move the cells
     for cell in cells:
         cell.move()
 
-
     # draw the cells
     for cell in cells:
+        if cell.pos[0] < 0:
+            cell.pos[0] += screen.get_width()
+        if cell.pos[1] < 0:
+            cell.pos[1] += screen.get_height()
         pygame.draw.circle(screen, (255, 0, 0), cell.pos, cell.radius)
 
     # find any touching cells and cull the weakest >:)
@@ -53,7 +58,7 @@ while RUNNING:
     for cell in cells:
         cell.lifespan -= 1
         if cell.lifespan <= 0:
-            print("cell died of old age at size", cell.radius)
+            print("cell died of old age at size", cell.radius, "rip")
             cells.remove(cell)
 
     pygame.display.update()
