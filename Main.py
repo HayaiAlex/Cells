@@ -35,10 +35,15 @@ while RUNNING:
 
     # draw the cells
     for cell in cells:
+        # if they move off the screen help them out
         if cell.pos[0] < 0:
             cell.pos[0] += screen.get_width()
         if cell.pos[1] < 0:
             cell.pos[1] += screen.get_height()
+        if cell.pos[0] > screen.get_width():
+            cell.pos[0] -= screen.get_width()
+        if cell.pos[1] > screen.get_height():
+            cell.pos[1] -= screen.get_height()
         pygame.draw.circle(screen, (255, 0, 0), cell.pos, cell.radius)
 
     # find any touching cells and cull the weakest >:)
@@ -48,10 +53,12 @@ while RUNNING:
                 if cell.getTouching(cell2):
                     pygame.draw.circle(screen, (0, 255, 0), cell.pos, cell.radius)
                     if cell.radius > cell2.radius:
-                        cells.remove(cell2)
+                        if cell2:
+                            cells.remove(cell2)
                         cell.radius += 2
                     else:
-                        cells.remove(cell)
+                        if cell:
+                            cells.remove(cell)
                         cell2.radius += 2
 
     # cull the cells :c

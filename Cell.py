@@ -16,7 +16,6 @@ class Cell:
         new_x = self.pos[0] + self.speed * math.cos(new_angle) 
         new_y = self.pos[1] + self.speed * math.sin(new_angle) 
         new_pos = [int(round(new_x)), int(round(new_y))]
-        print(self.pos, new_pos, new_angle, math.cos(new_angle), math.sin(new_angle))
         self.pos = new_pos
 
 
