@@ -1,5 +1,6 @@
 import random
 import math
+import pygame
 class Cell:
     lifespan = 500
     age = 1
@@ -16,6 +17,27 @@ class Cell:
         self.pos = pos
         self.angle = random.uniform(0, 2*math.pi)
         self.colour = self.starting_colour
+
+    def draw(self, screen):
+        #body
+        pygame.draw.circle(screen, self.colour, self.pos, self.radius)
+        #eyes
+        eye_background_colour = (255, 255, 255)
+        eye_pupil_colour = (0, 0, 0)
+        eye_size = int(self.radius/4)
+        pupil_size = int(eye_size*0.75)
+        eye_offset = 0.75
+        left_eye_pos = [int(round(self.pos[0] + (self.radius/2) * math.cos(self.angle-eye_offset))),
+                        int(round(self.pos[1] + (self.radius/2) * math.sin(self.angle-eye_offset)))]
+        right_eye_pos = [int(round(self.pos[0] + (self.radius/2) * math.cos(self.angle+eye_offset))),
+                        int(round(self.pos[1] + (self.radius/2) * math.sin(self.angle+eye_offset)))]
+        # draw whites
+        pygame.draw.circle(screen, eye_background_colour, left_eye_pos, eye_size)
+        pygame.draw.circle(screen, eye_background_colour, right_eye_pos, eye_size)
+        # draw pupils
+        pygame.draw.circle(screen, eye_pupil_colour, left_eye_pos, int(pupil_size))
+        pygame.draw.circle(screen, eye_pupil_colour, right_eye_pos, int(pupil_size))
+
 
     def pick_new_turn(self):
         self.turn = random.uniform(-0.5, 0.5)
@@ -39,8 +61,8 @@ class Cell:
         self.age += 1
 
         # Finds the difference between starting_colour and final_colour
-        # Reduces it to the proportion of a cell's age through its full lifespan (1.4 the change for only 1/4 through its life)
-        # Subtracts this new difference from the starting_colour to get the new_colour 
+        # Reduces it to the proportion of a cell's age through its full lifespan (1/4 the change for only 1/4 through its life)
+        # Subtracts this new difference from the starting_colour to get the new_colour
         proportion_through_life = self.age / self.lifespan
         new_colour = tuple(x-((x-y) * proportion_through_life) for x, y in zip(self.starting_colour, self.final_colour))
         self.colour = new_colour

@@ -44,7 +44,7 @@ while RUNNING:
             cell.pos[0] -= screen.get_width()
         if cell.pos[1] > screen.get_height():
             cell.pos[1] -= screen.get_height()
-        pygame.draw.circle(screen, cell.colour, cell.pos, cell.radius)
+        cell.draw(screen)
 
     # find any touching cells and cull the weakest >:)
     for cell in cells:
@@ -54,13 +54,17 @@ while RUNNING:
                     if cell.radius > cell2.radius:
                         # these cell exist checks dont fix the bug here
                         # sometimes tries to get type of a cell that doesn't exist
-                        if type(cells.index(cell2)) == int:
+                        try:
                             cells.remove(cell2)
+                        except:
+                            print("hmm")
                         cell.radius += 2
                         pygame.draw.circle(screen, (0, 150, 0), cell2.pos, cell2.radius)
                     else:
-                        if type(cells.index(cell)) == int:
+                        try:
                             cells.remove(cell)
+                        except:
+                            print("hmm")
                         cell2.radius += 2
                         pygame.draw.circle(screen, (0, 150, 0), cell.pos, cell.radius)
 
