@@ -7,8 +7,8 @@ class Cell:
     radius = 10
     angle = 0 # in radians
     turn = 0
-    speed = 3
     turn_cooldown = 0
+    base_speed = 40
 
     starting_colour = (255, 0, 0)
     final_colour = (0, 0, 255)
@@ -17,6 +17,11 @@ class Cell:
         self.pos = pos
         self.angle = random.uniform(0, 2*math.pi)
         self.colour = self.starting_colour
+        self.speed = self.base_speed * (1/self.radius)
+
+    def grow(self, size):
+        self.radius += size
+        self.speed = self.base_speed * (1/self.radius)
 
     def draw(self, screen):
         #body
@@ -40,7 +45,7 @@ class Cell:
 
 
     def pick_new_turn(self):
-        self.turn = random.uniform(-0.5, 0.5)
+        self.turn = random.uniform(-0.25, 0.25)
 
     def move(self):
         # idea: add obsticles (scenery) for cells to move around
