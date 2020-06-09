@@ -33,7 +33,7 @@ food_add_rate = 2
 cell_add_rate = 2
 
 max_food = 20
-max_cells = 20
+max_cells = 50
 
 RUNNING = True
 clock = pygame.time.Clock()
@@ -78,12 +78,7 @@ while RUNNING:
 
     # move the cells
     for cell in cells:
-        if cell.diet == "Herbivore":
-            closest_neighbors = cell.searchNeighbors(cells, foods)
-        elif cell.diet == "Carnivore":
-            closest_neighbors = cell.searchNeighbors(cells)
-        else: # Omnivore
-            closest_neighbors = cell.searchNeighbors(cells, foods)
+        closest_neighbors = cell.searchNeighbors(cells, foods)
 
 
         # Move cell based on closest cell data

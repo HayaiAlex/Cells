@@ -8,7 +8,7 @@ class Carnivore(Cell):
         self.starting_colour = (255, 0, 0)
         self.final_colour = (255, 100, 100)
 
-    def searchNeighbors(self, cells):
+    def searchNeighbors(self, cells, foods):
         # reset closest scary and food cells
         findings = {
             "closest_scary_side": False,
