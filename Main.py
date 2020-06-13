@@ -1,9 +1,11 @@
 import random
 import pygame
+import pygame.freetype
 import math
-from Entities import Cell, Food, Carnivore, Herbivore, Cannibal
+from Entities import Food, Carnivore, Omnivore, Herbivore, Cannibal
 
 pygame.init()
+myfont = pygame.freetype.SysFont("Arial", 24)
 
 screen_width = 1600
 screen_height = 900
@@ -48,9 +50,18 @@ def touching(entity):
     else:
         return False
 
+selected_cell = 0
+possible_cells = [Carnivore, Omnivore, Herbivore, Cannibal]
 
 while RUNNING:
     clock.tick(15)
+
+    screen.fill((0, 0, 0))
+
+    TEXT = "Selected: " + possible_cells[selected_cell].__name__
+    text_surface, rect = myfont.render(TEXT, (255, 255, 255))
+    screen.blit(text_surface, (10, 10))
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -58,7 +69,8 @@ while RUNNING:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             RUNNING = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1: # Left mouse click
+            print(event.button) # 4 up mouse wheel, 5 down mouse wheel
+            if event.button == 1: # Left mouse click, remove a cell
                 for cell in cells:
                     if touching(cell):
                         try:
@@ -66,12 +78,23 @@ while RUNNING:
                         except ValueError:
                             print("hmm")
 
-            if event.button == 3: # Right mouse click
+            if event.button == 3: # Right mouse click, place food :)
                 mouse_pos = pygame.mouse.get_pos()
                 foods.append(Food(mouse_pos))
 
+            if event.button == 2: # Middle mouse click, make a cell
+                mouse_pos = pygame.mouse.get_pos()
+                cells.append(possible_cells[selected_cell](mouse_pos))
 
-    screen.fill((0, 0, 0))
+            if event.button == 4: # Up scroll, change selection
+                selected_cell -= 1
+                if selected_cell < 0:
+                    selected_cell = len(possible_cells) - 1
+            if event.button == 5: # Down scroll, change selection
+                selected_cell += 1
+                if selected_cell > len(possible_cells) - 1:
+                    selected_cell = 0
+
 
     if food_wait_counter >= food_add_rate:
         # add food if less than max
@@ -96,7 +119,7 @@ while RUNNING:
             elif species < 0.75:
                 cells.append(Cannibal([x, y]))
             else:
-                cells.append(Cell([x, y]))
+                cells.append(Omnivore([x, y]))
                 omnivore_count += 1
 
     food_wait_counter += 1
