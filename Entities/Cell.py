@@ -133,9 +133,11 @@ class Cell:
                 # if not ontop of each other
                 if self.pos != entity.pos:
                     # use cosine rule to find angle from side of cell to entity
-                    angle_from_side_to_entity = math.acos((distance_between_points**2+self.viewing_distance**2-distance_between_xy**2)
-                                                        /(2*distance_between_points*self.viewing_distance))
-
+                    if distance_between_points != 0:
+                        angle_from_side_to_entity = math.acos((distance_between_points**2+self.viewing_distance**2-distance_between_xy**2)
+                                                            /(2*distance_between_points*self.viewing_distance))
+                    else:
+                        angle_from_side_to_entity = 0.5*math.pi
                     # x_distance = abs(self.pos[0] - entity.pos[0])
                     # y_distance = abs(self.pos[1] - entity.pos[1])
                     # if x_distance == 0:

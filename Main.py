@@ -55,13 +55,20 @@ while RUNNING:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             RUNNING = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            RUNNING = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            for cell in cells:
-                if touching(cell):
-                    try:
-                        cells.remove(cell)
-                    except ValueError:
-                        print("hmm")
+            if event.button == 1: # Left mouse click
+                for cell in cells:
+                    if touching(cell):
+                        try:
+                            cells.remove(cell)
+                        except ValueError:
+                            print("hmm")
+
+            if event.button == 3: # Right mouse click
+                mouse_pos = pygame.mouse.get_pos()
+                foods.append(Food(mouse_pos))
 
 
     screen.fill((0, 0, 0))
