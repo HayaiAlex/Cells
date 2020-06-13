@@ -1,5 +1,6 @@
 import random
 import pygame
+import math
 from Entities import Cell, Food, Carnivore, Herbivore, Cannibal
 
 pygame.init()
@@ -38,12 +39,30 @@ RUNNING = True
 clock = pygame.time.Clock()
 food_wait_counter = 0
 cell_wait_counter = 0
+
+def touching(entity):
+    mouse_pos = pygame.mouse.get_pos()
+    distance_between_entity_and_mouse = math.sqrt((mouse_pos[0]-entity.pos[0])**2 + (mouse_pos[1]-entity.pos[1])**2)
+    if distance_between_entity_and_mouse < entity.radius:
+        return True
+    else:
+        return False
+
+
 while RUNNING:
     clock.tick(15)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             RUNNING = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for cell in cells:
+                if touching(cell):
+                    try:
+                        cells.remove(cell)
+                    except ValueError:
+                        print("hmm")
+
 
     screen.fill((0, 0, 0))
 
