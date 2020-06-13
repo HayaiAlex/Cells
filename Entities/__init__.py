@@ -1,6 +1,6 @@
 # __init__.py
-import Entities.Cell
-import Entities.Food
-import Entities.Carnivore
-import Entities.Cannibal
-import Entities.Herbivore
+from Entities.Cell import Cell
+from Entities.Food import Food
+from Entities.Carnivore import Carnivore
+from Entities.Cannibal import Cannibal
+from Entities.Herbivore import Herbivore
