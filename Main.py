@@ -1,10 +1,6 @@
 import random
 import pygame
-from Cell import Cell
-from Herbivore import Herbivore
-from Carnivore import Carnivore
-from Cannibal import Cannibal
-from Food import Food
+from Entities import Cell, Food, Carnivore, Herbivore, Cannibal
 
 pygame.init()
 

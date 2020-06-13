@@ -1,4 +1,4 @@
-from Cell import Cell
+from Entities.Cell import Cell
 
 class Herbivore(Cell):
     species = "Herbivore"

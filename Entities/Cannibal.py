@@ -1,5 +1,5 @@
-from Carnivore import Carnivore
-from Cell import Cell
+from Entities.Carnivore import Carnivore
+from Entities.Cell import Cell
 
 class Cannibal(Cell):
     species = "Cannbial"
