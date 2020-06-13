@@ -1,7 +1,10 @@
 from Cell import Cell
 
 class Carnivore(Cell):
-    diet = "Carnivore"
+    species = "Carnivore"
+    can_eat_cells = True
+    can_eat_fruit = False
+    can_eat_own_species = False
 
     def __init__(self, pos):
         super().__init__(pos)
@@ -23,7 +26,7 @@ class Carnivore(Cell):
         for cell2 in cells:
             inView = self.inView(cell2)
             if inView:
-                if cell2.diet != "Herbivore": # scary
+                if cell2.species != "Herbivore": # scary
                     if inView["Size"] == "Bigger": # if other cell is bigger move away
                         if inView["Distance"] < findings["closest_scary_distance"]: # if cell is closer than current closest scary make priority
                             findings["closest_scary_distance"] = inView["Distance"]

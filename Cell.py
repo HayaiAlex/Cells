@@ -2,7 +2,10 @@ import random
 import math
 import pygame
 class Cell:
-    diet = "Omnivore"
+    species = "Omnivore"
+    can_eat_cells = True
+    can_eat_fruit = True
+    can_eat_own_species = False
     lifespan = 500
     age = 1
     radius = 10
@@ -63,7 +66,27 @@ class Cell:
     def pick_new_turn(self):
         self.turn = random.uniform(-self.turn_speed, self.turn_speed)
 
-    def move(self, direction=False):
+    @staticmethod
+    def pick_move_direction(closest_neighbors=False):
+        """Returns the direction the cell should move in with priority to safety over eating"""
+        if closest_neighbors["closest_scary_side"] == "Right":
+            direction = "Left"
+        elif closest_neighbors["closest_scary_side"] == "Left":
+            direction = "Right"
+        elif closest_neighbors["closest_food_side"] == "Right":
+            direction = "Right"
+        elif closest_neighbors["closest_food_side"] == "Left":
+            direction = "Left"
+        else:
+            if random.random() > 0.5:
+                direction = "Right"
+            else:
+                direction = "Left"
+        return direction
+
+    def move(self, closest_neighbors=False):
+        direction = self.pick_move_direction(closest_neighbors)
+
         # idea: add obsticles (scenery) for cells to move around
         # cells should try move to/eat smaller cells and flee from larger ones
         if direction == "Right":
@@ -152,7 +175,7 @@ class Cell:
         for cell2 in cells:
             inView = self.inView(cell2)
             if inView:
-                if cell2.diet != "Herbivore": # scary
+                if cell2.species != "Herbivore": # scary
                     if inView["Size"] == "Bigger": # if other cell is bigger move away
                         if inView["Distance"] < findings["closest_scary_distance"]: # if cell is closer than current closest scary make priority
                             findings["closest_scary_distance"] = inView["Distance"]
