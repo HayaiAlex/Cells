@@ -1,7 +1,6 @@
 from Entities.Carnivore import Carnivore
-from Entities.Cell import Cell
 
-class Cannibal(Cell):
+class Cannibal(Carnivore):
     species = "Cannbial"
     can_eat_cells = True
     can_eat_fruit = False
