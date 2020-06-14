@@ -5,7 +5,7 @@ import math
 from Entities import Food, Carnivore, Omnivore, Herbivore, Cannibal
 
 pygame.init()
-myfont = pygame.freetype.SysFont("Arial", 24)
+myfont = pygame.freetype.SysFont("Arial", 20)
 
 screen_width = 1600
 screen_height = 900
@@ -32,11 +32,14 @@ died_from_old_age_count = 0
 died_from_being_eaten_count = 0
 died_from_hunger = 0
 
+program_spawned = 0
+naturally_spawned = 0
+
 # how many frames before adding a new entity
 food_add_rate = 2
 cell_add_rate = 2
 
-max_food = 30
+max_food = 60
 max_cells = 25
 
 RUNNING = True
@@ -52,7 +55,7 @@ def touching(entity):
     else:
         return False
 
-def make_entity(entity, pos = False):
+def make_entity(entity, pos=False):
     if not pos:
         x = random.randint(0, screen.get_width())
         y = random.randint(0, screen.get_height())
@@ -97,7 +100,7 @@ while RUNNING:
             if event.button == 2: # Middle mouse click, make a cell
                 mouse_pos = pygame.mouse.get_pos()
                 cells.append(possible_cells[selected_cell](mouse_pos))
-
+                program_spawned += 1
             if event.button == 4: # Up scroll, change selection
                 selected_cell -= 1
                 if selected_cell < 0:
@@ -118,17 +121,18 @@ while RUNNING:
         cell_wait_counter = 0
         if len(cells) < max_cells:
             species = random.random()
-            if species < 0.25:
+            if species < 0.33:
                 make_entity(Carnivore)
                 carnivore_count += 1
-            elif species < 0.5:
+            elif species < 0.66:
                 make_entity(Herbivore)
                 herbivore_count += 1
-            elif species < 0.75:
-                make_entity(Cannibal)
+            # elif species < 0.75:
+            #     make_entity(Cannibal)
             else:
                 make_entity(Omnivore)
                 omnivore_count += 1
+            program_spawned += 1
 
     food_wait_counter += 1
     cell_wait_counter += 1
@@ -169,14 +173,15 @@ while RUNNING:
                         if cell.species == cell2.species and cell.can_eat_own_species \
                             or cell.species != cell2.species:
                             if cell.getTouching(cell2):
-                                if cell.radius >= cell2.radius:
+                                cell.ate()
+                                cell2.radius -= 2
+                                if cell2.radius < 8:
                                     try:
                                         cells.remove(cell2)
                                     except ValueError:
                                         print("hmm")
                                     died_from_being_eaten_count += 1
                                     total_deaths += 1
-                                    cell.ate()
                                     pygame.draw.circle(screen, (0, 150, 0), cell2.pos, cell2.radius)
 
             # find if touching food and eat it for herbivores
@@ -192,15 +197,16 @@ while RUNNING:
                 cell2 = closest_neighbors["same_species_cell"]
                 if not cell2.hungry: # if cell 2 is not hungry = ready to mate
                     if cell.getTouching(cell2):
-                        cell.woohood()
-                        cell2.woohood()
-                        make_entity(cell.__class__, cell.pos)
+                        if cell.canWoohoo() and cell2.canWoohoo():
+                            cell.woohood()
+                            cell2.woohood()
+                            naturally_spawned += 1
+                            make_entity(cell.__class__, cell.pos)
 
 
     # cull the cells :c
     for cell in cells:
-        cell.birthday()
-        cell.spend_energy()
+        cell.update_cell_stats() # age, energy, woohoo cooldown
         if cell.age > cell.lifespan or cell.energy < 0:
 
             total_deaths += 1
@@ -216,14 +222,26 @@ while RUNNING:
                 best_herbivore = cell.radius
             elif cell.species == "Omnivore" and cell.radius > best_omnivore:
                 best_omnivore = cell.radius
-            
             cells.remove(cell)
 
-            print("Died from old age:", died_from_old_age_count/total_deaths*100, "%")
-            print("Died from hunger:", died_from_hunger/total_deaths*100, "%")
-            print("Died from eaten", died_from_being_eaten_count/total_deaths*100, "%")
-            print("Best carnivore:", best_carnivore)
-            print("Best herbivore:", best_herbivore)
-            print("Best omnivore:", best_omnivore)
+
+    
+    
+    TEXT = "Populations Carnivore: " + str(carnivore_count) + "  Omnivore: " + str(omnivore_count) + "  Herbivore: " + str(herbivore_count)
+    text_surface, rect = myfont.render(TEXT, (255, 255, 255))
+    screen.blit(text_surface, (10, screen.get_height()-60))
+    try:
+        TEXT = "Cause of death  Old age: " + str(round(died_from_old_age_count/total_deaths*100, 1)) + "%" + \
+                             "  Hunger: " + str(round(died_from_hunger/total_deaths*100, 1)) + "%" + \
+                             "  Eaten:  " + str(round(died_from_being_eaten_count/total_deaths*100, 1)) + "%"
+    except ZeroDivisionError:
+        TEXT = "0 deaths"
+    text_surface, rect = myfont.render(TEXT, (255, 255, 255))
+    screen.blit(text_surface, (10, screen.get_height()-30))
+    
+    # # print("Best carnivore:", best_carnivore)
+    # # print("Best herbivore:", best_herbivore)
+    # # print("Best omnivore:", best_omnivore)
+    # print("Program spawned:", program_spawned, "Naturally spawned:", naturally_spawned)
         
     pygame.display.update()
