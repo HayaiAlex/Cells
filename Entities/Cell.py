@@ -16,6 +16,9 @@ class Cell:
     base_speed = 40
     viewing_angle = 1.5
     viewing_distance = 150
+    max_energy = 100
+    energy = 100
+    hungry = True
 
     starting_colour = (0, 0, 255)
     final_colour = (100, 100, 255)
@@ -66,18 +69,23 @@ class Cell:
     def pick_new_turn(self):
         self.turn = random.uniform(-self.turn_speed, self.turn_speed)
 
-    @staticmethod
-    def pick_move_direction(closest_neighbors=False):
-        """Returns the direction the cell should move in with priority to safety over eating"""
+    def pick_move_direction(self, closest_neighbors=False):
+        """Returns the direction the cell should move in with priority: safety > eating > mating"""
         if closest_neighbors["closest_scary_side"] == "Right":
             direction = "Left"
         elif closest_neighbors["closest_scary_side"] == "Left":
             direction = "Right"
-        elif closest_neighbors["closest_food_side"] == "Right":
-            direction = "Right"
-        elif closest_neighbors["closest_food_side"] == "Left":
-            direction = "Left"
-        else:
+        elif self.energy < 50 and closest_neighbors["food_cell"]: # if energy is low find food
+            if closest_neighbors["closest_food_side"] == "Right":
+                direction = "Right"
+            elif closest_neighbors["closest_food_side"] == "Left":
+                direction = "Left"
+        elif self.energy >= 50 and closest_neighbors["same_species_cell"]: # if energy is high find mate
+            if closest_neighbors["closest_own_species_side"] == "Right":
+                direction = "Right"
+            elif closest_neighbors["closest_own_species_side"] == "Left":
+                direction = "Left"
+        else: # if nothing nearby search randomly
             if random.random() > 0.5:
                 direction = "Right"
             else:
@@ -115,6 +123,22 @@ class Cell:
         proportion_through_life = self.age / self.lifespan
         new_colour = tuple(x-((x-y) * proportion_through_life) for x, y in zip(self.starting_colour, self.final_colour))
         self.colour = new_colour
+
+    def spend_energy(self):
+        self.energy -= 0.5
+        if self.energy < 0.5 * self.max_energy:
+            self.hungry = True
+        else:
+            self.hungry = False
+
+    def woohood(self):
+        self.energy -= 10
+
+    def ate(self):
+        self.energy += 20
+        if self.energy > self.max_energy:
+            self.energy = self.max_energy
+        self.grow(2)
 
     def getTouching(self, cell2):
         distance_between_points = math.sqrt((self.pos[0]-cell2.pos[0])**2 + (self.pos[1]-cell2.pos[1])**2)
@@ -169,39 +193,54 @@ class Cell:
             "closest_scary_distance": self.viewing_distance,
             "closest_food_side": False,
             "closest_food_distance": self.viewing_distance,
+            "closest_own_species_side": False,
+            "closest_own_species_distance": self.viewing_distance,
             "scary_cell": False,
             "food_cell": False,
+            "same_species_cell": False,
         }
 
-        # find closest scary and food cells
+        # find closest scary, food cells, and closest own species
         for cell2 in cells:
-            inView = self.inView(cell2)
-            if inView:
-                if cell2.species != "Herbivore": # scary
-                    if inView["Size"] == "Bigger": # if other cell is bigger move away
-                        if inView["Distance"] < findings["closest_scary_distance"]: # if cell is closer than current closest scary make priority
-                            findings["closest_scary_distance"] = inView["Distance"]
+            in_view = self.inView(cell2)
+            if in_view:
+                if cell2.species != "Herbivore" and (self.species != cell2.species \
+                    or self.species == cell2.species and self.can_eat_own_species): # cells no scared of no herbivore nor same species unless cannibal
+                    if in_view["Size"] == "Bigger": # if other cell is bigger move away
+                        if in_view["Distance"] < findings["closest_scary_distance"]: # if cell is closer than current closest scary make priority
+                            findings["closest_scary_distance"] = in_view["Distance"]
                             findings["scary_cell"] = cell2
-                            if inView["Side"] == "Right":
+                            if in_view["Side"] == "Right":
                                 findings["closest_scary_side"] = "Right"
-                            elif inView["Side"] == "Left":
+                            elif in_view["Side"] == "Left":
                                 findings["closest_scary_side"] = "Left"
-                elif inView["Size"] == "Smaller": # if other cell is smaller move towards
-                    if inView["Distance"] < findings["closest_food_distance"]: # if cell is closer than current closest food make priority
-                        findings["closest_food_distance"] = inView["Distance"]
-                        findings["food_cell"] = cell2
-                        if inView["Side"] == "Right":
+                elif self.species == cell2.species and self.can_eat_own_species \
+                    or self.species != cell2.species: # check it can eat its own species if same species other no problem
+                    if self.can_eat_cells and in_view["Size"] == "Smaller": # if eats cells and other cell is smaller move towards
+                        if in_view["Distance"] < findings["closest_food_distance"]: # if cell is closer than current closest food make priority
+                            findings["closest_food_distance"] = in_view["Distance"]
+                            findings["food_cell"] = cell2
+                            if in_view["Side"] == "Right":
+                                findings["closest_food_side"] = "Right"
+                            elif in_view["Side"] == "Left":
+                                findings["closest_food_side"] = "Left"
+                if self.species == cell2.species:
+                    if in_view["Distance"] < findings["closest_own_species_distance"]: # if cell is closer than current closest scary make priority
+                            findings["closest_own_species_distance"] = in_view["Distance"]
+                            findings["same_species_cell"] = cell2
+                            if in_view["Side"] == "Right":
+                                findings["closest_own_species_side"] = "Right"
+                            elif in_view["Side"] == "Left":
+                                findings["closest_own_species_side"] = "Left"
+        if self.can_eat_fruit:
+            for food in foods:
+                in_view = self.inView(food)
+                if in_view:
+                    if in_view["Distance"] < findings["closest_food_distance"]: # if cell is closer than current closest scary make priority
+                        findings["closest_food_distance"] = in_view["Distance"]
+                        findings["food_cell"] = food
+                        if in_view["Side"] == "Right":
                             findings["closest_food_side"] = "Right"
-                        elif inView["Side"] == "Left":
+                        elif in_view["Side"] == "Left":
                             findings["closest_food_side"] = "Left"
-        for food in foods:
-            inView = self.inView(food)
-            if inView:
-                if inView["Distance"] < findings["closest_food_distance"]: # if cell is closer than current closest scary make priority
-                    findings["closest_food_distance"] = inView["Distance"]
-                    findings["food_cell"] = food
-                    if inView["Side"] == "Right":
-                        findings["closest_food_side"] = "Right"
-                    elif inView["Side"] == "Left":
-                        findings["closest_food_side"] = "Left"
         return findings

@@ -27,15 +27,17 @@ best_carnivore = 0
 best_herbivore = 0
 best_omnivore = 0
 
+total_deaths = 0
 died_from_old_age_count = 0
 died_from_being_eaten_count = 0
+died_from_hunger = 0
 
 # how many frames before adding a new entity
 food_add_rate = 2
 cell_add_rate = 2
 
-max_food = 20
-max_cells = 50
+max_food = 30
+max_cells = 25
 
 RUNNING = True
 clock = pygame.time.Clock()
@@ -49,6 +51,16 @@ def touching(entity):
         return True
     else:
         return False
+
+def make_entity(entity, pos = False):
+    if not pos:
+        x = random.randint(0, screen.get_width())
+        y = random.randint(0, screen.get_height())
+        pos = (x, y)
+    if entity == "Food":
+        foods.append(Food(pos))
+    else:
+        cells.append(entity(pos))
 
 selected_cell = 0
 possible_cells = [Carnivore, Omnivore, Herbivore, Cannibal]
@@ -100,26 +112,22 @@ while RUNNING:
         # add food if less than max
         food_wait_counter = 0
         if len(foods) < max_food:
-            x = random.randint(0, screen.get_width())
-            y = random.randint(0, screen.get_height())
-            foods.append(Food([x, y]))
+            make_entity("Food")
     if cell_wait_counter >= cell_add_rate:
         # add a new cell if less than max
         cell_wait_counter = 0
         if len(cells) < max_cells:
-            x = random.randint(0, screen.get_width())
-            y = random.randint(0, screen.get_height())
             species = random.random()
             if species < 0.25:
-                cells.append(Carnivore([x, y]))
+                make_entity(Carnivore)
                 carnivore_count += 1
             elif species < 0.5:
-                cells.append(Herbivore([x, y]))
+                make_entity(Herbivore)
                 herbivore_count += 1
             elif species < 0.75:
-                cells.append(Cannibal([x, y]))
+                make_entity(Cannibal)
             else:
-                cells.append(Omnivore([x, y]))
+                make_entity(Omnivore)
                 omnivore_count += 1
 
     food_wait_counter += 1
@@ -150,39 +158,57 @@ while RUNNING:
         cell.draw(screen)
 
 
-
-    # find any touching cells and cull the weakest >:)
     for cell in cells:
-        if cell.can_eat_cells:
-            for cell2 in cells:
-                # If species are same check can eat own species, if not no worries
-                if cell.species == cell2.species and cell.can_eat_own_species \
-                    or cell.species != cell2.species:
-                    if not cell == cell2:
-                        if cell.getTouching(cell2):
-                            died_from_being_eaten_count += 1
-                            if cell.radius >= cell2.radius:
-                                try:
-                                    cells.remove(cell2)
-                                except ValueError:
-                                    print("hmm")
-                                cell.grow(2)
-                                pygame.draw.circle(screen, (0, 150, 0), cell2.pos, cell2.radius)
+        # if hungry check touching food
+        if cell.hungry:
+            # find any touching cells and cull the weakest >:)
+            if cell.can_eat_cells:
+                for cell2 in cells:
+                    if cell != cell2: # don't eat self :P
+                        # If species are same check can eat own species, if not no worries
+                        if cell.species == cell2.species and cell.can_eat_own_species \
+                            or cell.species != cell2.species:
+                            if cell.getTouching(cell2):
+                                if cell.radius >= cell2.radius:
+                                    try:
+                                        cells.remove(cell2)
+                                    except ValueError:
+                                        print("hmm")
+                                    died_from_being_eaten_count += 1
+                                    total_deaths += 1
+                                    cell.ate()
+                                    pygame.draw.circle(screen, (0, 150, 0), cell2.pos, cell2.radius)
 
-    # find if touching food and eat it for herbivores
-    for cell in cells:
-        if cell.can_eat_fruit:
-            for food in foods:
-                if cell.getTouching(food):
-                    cell.grow(2)
-                    foods.remove(food)
+            # find if touching food and eat it for herbivores
+            if cell.can_eat_fruit:
+                for food in foods:
+                    if cell.getTouching(food):
+                        cell.ate()
+                        foods.remove(food)
+        # if not hungry check for mates
+        else:
+            closest_neighbors = cell.searchNeighbors(cells, foods)
+            if closest_neighbors["same_species_cell"]: # if there is a nearby cell check it wants to mate too
+                cell2 = closest_neighbors["same_species_cell"]
+                if not cell2.hungry: # if cell 2 is not hungry = ready to mate
+                    if cell.getTouching(cell2):
+                        cell.woohood()
+                        cell2.woohood()
+                        make_entity(cell.__class__, cell.pos)
 
 
     # cull the cells :c
     for cell in cells:
         cell.birthday()
-        if cell.age > cell.lifespan:
-            cells.remove(cell)
+        cell.spend_energy()
+        if cell.age > cell.lifespan or cell.energy < 0:
+
+            total_deaths += 1
+
+            if cell.age > cell.lifespan:
+                died_from_old_age_count += 1
+            elif cell.energy < 0:
+                died_from_hunger += 1
 
             if cell.species == "Carnivore" and cell.radius > best_carnivore:
                 best_carnivore = cell.radius
@@ -190,8 +216,12 @@ while RUNNING:
                 best_herbivore = cell.radius
             elif cell.species == "Omnivore" and cell.radius > best_omnivore:
                 best_omnivore = cell.radius
-            died_from_old_age_count += 1
-            print("Died from old age:", (died_from_old_age_count/died_from_being_eaten_count)*100, "%")
+            
+            cells.remove(cell)
+
+            print("Died from old age:", died_from_old_age_count/total_deaths*100, "%")
+            print("Died from hunger:", died_from_hunger/total_deaths*100, "%")
+            print("Died from eaten", died_from_being_eaten_count/total_deaths*100, "%")
             print("Best carnivore:", best_carnivore)
             print("Best herbivore:", best_herbivore)
             print("Best omnivore:", best_omnivore)
