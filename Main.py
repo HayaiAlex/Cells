@@ -176,13 +176,19 @@ while RUNNING:
                                 cell.ate()
                                 cell2.radius -= 2
                                 if cell2.radius < 8:
+                                    if cell2.species == "Carnivore":
+                                        carnivore_count -= 1
+                                    elif cell2.species == "Herbivore":
+                                        herbivore_count -= 1
+                                    elif cell2.species == "Omnivore":
+                                        omnivore_count -= 1
+                                    died_from_being_eaten_count += 1
+                                    total_deaths += 1
+                                    pygame.draw.circle(screen, (0, 150, 0), cell2.pos, cell2.radius)
                                     try:
                                         cells.remove(cell2)
                                     except ValueError:
                                         print("hmm")
-                                    died_from_being_eaten_count += 1
-                                    total_deaths += 1
-                                    pygame.draw.circle(screen, (0, 150, 0), cell2.pos, cell2.radius)
 
             # find if touching food and eat it for herbivores
             if cell.can_eat_fruit:
@@ -202,6 +208,12 @@ while RUNNING:
                             cell2.woohood()
                             naturally_spawned += 1
                             make_entity(cell.__class__, cell.pos)
+                            if cell.species == "Carnivore":
+                                carnivore_count += 1
+                            elif cell.species == "Herbivore":
+                                herbivore_count += 1
+                            elif cell.species == "Omnivore":
+                                omnivore_count += 1
 
 
     # cull the cells :c
@@ -216,12 +228,18 @@ while RUNNING:
             elif cell.energy < 0:
                 died_from_hunger += 1
 
-            if cell.species == "Carnivore" and cell.radius > best_carnivore:
-                best_carnivore = cell.radius
-            elif cell.species == "Herbivore" and cell.radius > best_herbivore:
-                best_herbivore = cell.radius
-            elif cell.species == "Omnivore" and cell.radius > best_omnivore:
-                best_omnivore = cell.radius
+            if cell.species == "Carnivore":
+                carnivore_count -= 1
+                if cell.radius > best_carnivore:
+                    best_carnivore = cell.radius
+            elif cell.species == "Herbivore":
+                herbivore_count -= 1
+                if cell.radius > best_herbivore:
+                    best_herbivore = cell.radius
+            elif cell.species == "Omnivore":
+                omnivore_count -= 1
+                if cell.radius > best_omnivore:
+                    best_omnivore = cell.radius
             cells.remove(cell)
 
 
